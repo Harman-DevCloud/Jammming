@@ -1,10 +1,58 @@
 import React from 'react';
 import RemoveIcon from '@mui/icons-material/Remove';
 
-function Playlist({ playlist, setPlaylist, playlistName, setPlaylistName, removeSong }) {
-
+function Playlist({ playlist, setPlaylist, playlistName, setPlaylistName, removeSong, token }) {
     const savePlaylistToSpotify = async () => {
-        alert("Spotify authentication required to save playlist!");
+        if (!token) {
+            alert("Please log in to Spotify first!");
+            return;
+        }
+
+        try {
+            const userResponse = await fetch('https://api.spotify.com/v1/me', {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            if (!userResponse.ok) throw new Error('Failed to get user info');
+
+            const userData = await userResponse.json();
+            const userId = userData.id;
+
+            const playlistResponse = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: playlistName,
+                    description: 'Created via my app!',
+                    public: false,
+                }),
+            });
+
+            if (!playlistResponse.ok) throw new Error('Failed to create playlist');
+
+            const playlistData = await playlistResponse.json();
+            const playlistId = playlistData.id;
+
+            const trackUris = playlist.map((track) => `spotify:track:${track.id}`);
+            const addTracksResponse = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ uris: trackUris }),
+            });
+
+            if (!addTracksResponse.ok) throw new Error('Failed to add tracks');
+
+            alert('Playlist saved to Spotify successfully!');
+        } catch (error) {
+            console.error('Error saving playlist:', error);
+            alert('Error saving playlist. Please try again.');
+        }
     };
 
     return (
@@ -35,9 +83,7 @@ function Playlist({ playlist, setPlaylist, playlistName, setPlaylistName, remove
                     onClick={savePlaylistToSpotify}>
                     Save to Spotify
                 </button>
-
             </div>
-
         </div>
     );
 }

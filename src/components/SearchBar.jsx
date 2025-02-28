@@ -1,33 +1,13 @@
 import React, { useState } from 'react';
 
-function SearchBar({song,setSong,setTracks}) {
-
-  const client_id = '560f96c49d4c4cbaa8fbfe37594fc0c2';
-  const client_secret = '307efd60ef4c4a978071607e5239f387';
-
+function SearchBar({song,setSong,setTracks,token}) {
   const getSongs = async () => {
     try {
-      const authResponse = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${client_id}:${client_secret}`),
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'grant_type=client_credentials', 
-      });
-
-      if (!authResponse.ok) {
-        throw new Error('Failed to retrieve Spotify token');
-      }
-
-      const authData = await authResponse.json();
-      const accessToken = authData.access_token;
-
       const searchResponse = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(song)}&type=track&limit=8`,
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(song)}&type=track&limit=6`,
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
+            'Authorization': `Bearer ${token}`,
           },
         }
       );
